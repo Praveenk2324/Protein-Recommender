@@ -1,6 +1,7 @@
 import joblib
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware 
 import pandas as pd
 import numpy as np
 import os
@@ -8,6 +9,14 @@ import os
 app = FastAPI(
     title="High-Protein Food Recommender API",
     description="Send target macros to receive mathematically similar food recommendations."
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows any frontend to talk to your API
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows POST, GET, etc.
+    allow_headers=["*"],
 )
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
