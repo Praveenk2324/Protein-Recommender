@@ -1,5 +1,6 @@
 import joblib
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware 
 import pandas as pd
@@ -88,3 +89,8 @@ def recommend_post(req:MacroRequest):
         "target_request": req.dict(),
         "recommendations": recommendations
     }
+
+@app.get("/")
+def serve_frontend():
+    """Serves the HTML UI when someone visits the base URL."""
+    return FileResponse(os.path.join(BASE_DIR, "index.html"))
