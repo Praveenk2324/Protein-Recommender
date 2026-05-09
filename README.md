@@ -15,7 +15,6 @@ A production-ready Machine Learning REST API and Single-Page Web Application. Th
 ## 🚀 Features
 
 * **Machine Learning Engine:** Unsupervised k-Nearest Neighbors (kNN) model computing Euclidean distances across a 7-dimensional nutritional space.
-* **Feature Engineering:** Custom `protein_per_100_cal` density metric to prioritize lean, high-protein foods.
 * **FastAPI Backend:** High-performance, asynchronous REST API serving the ML model artifacts.
 * **Interactive UI:** Clean, responsive HTML/JS/CSS frontend served directly from the backend.
 * **Fully Containerized:** Built with Docker for exact environment replication and seamless cloud deployment.
