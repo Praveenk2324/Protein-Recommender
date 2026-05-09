@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Protein Food Recommender</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #27ae60; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background-color: #2ecc71; }
+        
+        /* Results Styling */
+        #results { margin-top: 30px; }
+        .food-card { background: #ecf0f1; padding: 15px; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #3498db; }
+        .food-title { font-size: 18px; font-weight: bold; margin: 0 0 5px 0; color: #2980b9; }
+        .food-category { font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .macros { display: flex; justify-content: space-between; font-size: 14px; background: white; padding: 10px; border-radius: 5px; }
+        .macro-item span { font-weight: bold; color: #2c3e50; }
+        
+        .loading { text-align: center; font-style: italic; color: #7f8c8d; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Macro Matcher</h1>
+    <p style="text-align: center; color: #7f8c8d; margin-bottom: 25px;">Enter your target macros for a meal or snack to find the closest high-protein food match.</p>
+    
+    <form id="macroForm">
+        <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="flex: 1;">
+                <label for="calories">Calories (kcal)</label>
+                <input type="number" id="calories" value="250" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label for="protein">Protein (g)</label>
+                <input type="number" id="protein" value="30" required>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="flex: 1;">
+                <label for="carbs">Carbs (g)</label>
+                <input type="number" id="carbs" value="10" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label for="fat">Fat (g)</label>
+                <input type="number" id="fat" value="5" required>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="flex: 1;">
+                <label for="iron">Iron (mg)</label>
+                <input type="number" id="iron" value="2" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label for="vitamin_c">Vitamin C (mg)</label>
+                <input type="number" id="vitamin_c" value="0" required>
+            </div>
+        </div>
+        
+        <button type="submit">Find My Food</button>
+    </form>
+
+    <div id="loadingMessage" class="loading">Calculating distances via ML model...</div>
+    <div id="results"></div>
+</div>
+
+<script>
+    // --- IMPORTANT: Change this URL to your Render URL if testing the cloud version! ---
+    // Example: const API_URL = "https://protein-api-xyz.onrender.com/recommend";
+    const API_URL = "http://127.0.0.1:8000/recommend"; 
+
+    document.getElementById('macroForm').addEventListener('submit', async function(e) {
+        e.preventDefault(); // Prevent page from refreshing
+        
+        const resultsDiv = document.getElementById('results');
+        const loadingMsg = document.getElementById('loadingMessage');
+        
+        resultsDiv.innerHTML = ""; 
+        loadingMsg.style.display = "block";
+
+        // Build the payload
+        const payload = {
+            calories: parseFloat(document.getElementById('calories').value),
+            protein: parseFloat(document.getElementById('protein').value),
+            carbs: parseFloat(document.getElementById('carbs').value),
+            fat: parseFloat(document.getElementById('fat').value),
+            iron: parseFloat(document.getElementById('iron').value),
+            vitamin_c: parseFloat(document.getElementById('vitamin_c').value)
+        };
+
+        try {
+            // Send request to your FastAPI backend
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            // Loop through recommendations and build HTML
+            data.recommendations.forEach(food => {
+                const card = `
+                    <div class="food-card">
+                        <p class="food-title">#${food.rank}: ${food.food_name}</p>
+                        <p class="food-category">${food.category}</p>
+                        <div class="macros">
+                            <div class="macro-item">Cals: <span>${food.macros.calories}</span></div>
+                            <div class="macro-item">Pro: <span>${food.macros.protein}g</span></div>
+                            <div class="macro-item">Carbs: <span>${food.macros.carbs}g</span></div>
+                            <div class="macro-item">Fat: <span>${food.macros.fat}g</span></div>
+                        </div>
+                    </div>
+                `;
+                resultsDiv.innerHTML += card;
+            });
+        } catch (error) {
+            resultsDiv.innerHTML = `<p style="color: red; text-align: center;">Connection failed. Is the API running?</p>`;
+            console.error(error);
+        } finally {
+            loadingMsg.style.display = "none";
+        }
+    });
+</script>
+
+</body>
+</html>
